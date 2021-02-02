@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdlib>
+#include <immintrin.h>
 
 
 #define l 4
@@ -13,7 +14,7 @@ using namespace std;
 void fillMatrix(float** &Matrix, int line1, int column1) {
 			for (int i = 0; i < line1; i++)
 				for (int j = 0; j < column1; j++)
-					Matrix[i][j] = /*rand() % 20 + */1;
+					Matrix[i][j] = rand() % 20 + 1;
 }
 
 
@@ -29,37 +30,86 @@ void vecMul(int L, int N, int M, float** A, float** B, float** C)
 {
 	for (int i = 0; i < L; ++i)
 	{
-		for (int j = 0; j < N; ++j)
-			C[i][j] = 0;
+		float* c = C[i];
+		for (int j = 0; j < N; ++j) 
+			c[j] = 0;
 		for (int k = 0; k < M; ++k)
 		{
+			const float* b = B[k];
 			float a = A[i][k];
 			for (int j = 0; j < N; ++j)
-				C[i][j] += a * B[k][j];
+				c[j] += a * b[j];
+		}
+	}
+}
+
+
+void Mul(int L, int N, int M, float** A, float** B, float** C)
+{
+	for (int i = 0; i < L; ++i)
+	{
+		float* c = C[i];
+		for (int j = 0; j < N; ++j)
+			c[j] = 0;
+		for (int k = 0; k < M; ++k)
+		{
+			const float* b = B[k];
+			float a = A[i][k];
+			#pragma loop(no_vector)
+			for (int j = 0; j < N; ++j)
+				c[j] += a * b[j];
 		}
 	}
 }
 
 
 
+void vecMulIns(int L, int N, int M, float** A, float** B, float** C)
+{
+	for (int i = 0; i < L; ++i)
+	{
+		for (int j = 0; j < N; j += 8)
+			_mm256_storeu_ps(C[i], _mm256_setzero_ps());
+		for (int k = 0; k < M; ++k)
+		{
+			__m256 a = _mm256_set1_ps(A[i][k]);
+			for (int j = 0; j < N; j += 8)
+			{
+				_mm256_storeu_ps(C[i], _mm256_fmadd_ps(a,
+					_mm256_loadu_ps(B[k]), _mm256_loadu_ps(C[i])));
+			}
+		}
+	}
+}
+
+
 void main() {
+
+	
 
 	float** A = initialize(l, m);
 	float** B = initialize(m, n);
 	float** C = initialize(l, n);
+	float** C1 = initialize(l, n);
+	float** C2 = initialize(l, n);
 
 	fillMatrix(A, l, m);
 	fillMatrix(B, m, n);
 
 
-
 	vecMul(l, n, m, A, B, C);
+	vecMulIns(l, n, m, A, B, C1);
+	Mul(l, n, m, A, B, C2);
 
-	for (int i = 0; i < l; i++) {
+
+	for (int i = 0; i < l; i++) 
 		for (int j = 0; j < n; j++)
-			cout << C[i][j] << " ";
-		cout << endl;
-	}
-
+			if (C[i][j] != C1[i][j]) cout << "Matrix(C, C1) not equal" << endl;
+			else if ((i == l - 1) && (j == n - 1) && (C[i][j] == C1[i][j])) cout << "Matrix(C, C1) are equal" << endl;
+	for (int i = 0; i < l; i++)
+		for (int j = 0; j < n; j++)
+			if (C1[i][j] != C2[i][j]) cout << "Matrix(C1, C2) not equal" << endl;
+			else if ((i == l - 1) && (j == n - 1) && (C1[i][j] == C2[i][j])) cout << "Matrix(C1, C2) are equal" << endl;
 }
+
 
