@@ -55,7 +55,7 @@ void Mul(int L, int N, int M, float** A, float** B, float** C)
 		{
 			const float* b = B[k];
 			float a = A[i][k];
-			#pragma loop(no_vector)
+			__pragma(loop(no_vector))
 			for (int j = 0; j < N; ++j)
 				c[j] += a * b[j];
 		}
@@ -111,5 +111,4 @@ void main() {
 			if (C1[i][j] != C2[i][j]) cout << "Matrix(C1, C2) not equal" << endl;
 			else if ((i == l - 1) && (j == n - 1) && (C1[i][j] == C2[i][j])) cout << "Matrix(C1, C2) are equal" << endl;
 }
-
 
