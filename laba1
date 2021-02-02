@@ -2,9 +2,6 @@
 #include <cstdlib>
 
 
-#define L 32
-#define M 16
-#define N 8
 #define l 4
 #define m 4
 #define n 8
@@ -13,58 +10,56 @@
 using namespace std;
 
 
-void fillMatrix(float**** &Matrix, int line1, int column1, int line2, int column2) {
-	for (int x = 0; x < line1; x++)
-		for (int y = 0; y < column1; y++)
-			for (int i = 0; i < line2; i++)
-				for (int j = 0; j < column2; j++)
-					Matrix[x][y][i][j] = rand() % 20 + 1;
+void fillMatrix(float** &Matrix, int line1, int column1) {
+			for (int i = 0; i < line1; i++)
+				for (int j = 0; j < column1; j++)
+					Matrix[i][j] = /*rand() % 20 + */1;
 }
 
 
-float**** initialize(int line1, int column1, int line2, int column2) {
-	float**** arr = new float*** [line1];
-	for (int x = 0; x < line1; x++) {
-		arr[x] = new float** [column1];
-		for (int y = 0; y < column1; y++) {
-			arr[x][y] = new float* [line2];
-			for (int i = 0; i < line2; i++)
-				arr[x][y][i] = new float[column2];
-		}
-	}
+float** initialize(int line1, int column1) {
+	float** arr = new float* [line1];
+	for (int x = 0; x < line1; x++) 
+		arr[x] = new float [column1];				
 	return arr;
 }
 
 
-//void vecMul(int , int , int , const float* A, const float* B, float* C)
-//{
-//	for (int i = 0; i < M; ++i)
-//	{
-//		float* c = C + i * N;
-//		for (int j = 0; j < N; ++j)
-//			c[j] = 0;
-//		for (int k = 0; k < K; ++k)
-//		{
-//			const float* b = B + k * N;
-//			float a = A[i * K + k];
-//			for (int j = 0; j < N; ++j)
-//				c[j] += a * b[j];
-//		}
-//	}
-//}
+void vecMul(int L, int N, int M, float** A, float** B, float** C)
+{
+	for (int i = 0; i < L; ++i)
+	{
+		for (int j = 0; j < N; ++j)
+			C[i][j] = 0;
+		for (int k = 0; k < M; ++k)
+		{
+			float a = A[i][k];
+			for (int j = 0; j < N; ++j)
+				C[i][j] += a * B[k][j];
+		}
+	}
+}
 
 
 
 void main() {
 
-	float**** A = initialize(L, M, l, m);
-	float**** B = initialize(M, N, m, n);
-	float**** C = initialize(L, N, l, n);
+	float** A = initialize(l, m);
+	float** B = initialize(m, n);
+	float** C = initialize(l, n);
 
-	fillMatrix(A, L, M, l, m);
-	fillMatrix(B, M, N, m, n);
+	fillMatrix(A, l, m);
+	fillMatrix(B, m, n);
 
-	
 
+
+	vecMul(l, n, m, A, B, C);
+
+	for (int i = 0; i < l; i++) {
+		for (int j = 0; j < n; j++)
+			cout << C[i][j] << " ";
+		cout << endl;
+	}
 
 }
+
